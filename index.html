@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fire & Water: Coffee Shop Showdown</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background: #120c08;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 10px;
+    }
+
+    .main-banner {
+      width: 920px;
+      background: linear-gradient(90deg, #ff416c 0%, #8a2387 50%, #00c6ff 100%);
+      padding: 12px;
+      border-radius: 12px 12px 0 0;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+
+    .banner-title {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .banner-sub {
+      font-size: 13px;
+      margin-top: 4px;
+      color: #f1f2f6;
+      font-weight: 600;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .game-wrapper {
+      position: relative;
+      width: 920px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.8);
+      border-radius: 0 0 14px 14px;
+      overflow: hidden;
+      border: 3px solid #4a2e1b;
+      background: #23160e;
+    }
+
+    /* Top HUD Header */
+    .hud-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #2e1c12;
+      padding: 10px 20px;
+      border-bottom: 2px solid #523420;
+    }
+
+    .player-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0,0,0,0.4);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .p1-badge { border: 2px solid #ff4757; color: #ff6b81; }
+    .p2-badge { border: 2px solid #1e90ff; color: #70a1ff; }
+
+    .score-count {
+      background: rgba(255,255,255,0.15);
+      padding: 2px 10px;
+      border-radius: 10px;
+      color: #fff;
+    }
+
+    canvas {
+      display: block;
+      background: #213c27;
+      cursor: crosshair;
+    }
+
+    /* Modal Overlay */
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 1;
+      transition: opacity 0.2s ease;
+      z-index: 10;
+    }
+
+    .modal-overlay.hidden {
+      display: none;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .modal-card {
+      background: #2b1a10;
+      border: 3px solid #d4a373;
+      border-radius: 16px;
+      width: 520px;
+      padding: 24px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.8);
+      text-align: center;
+    }
+
+    .modal-tag {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .tag-p1 { background: #ff4757; color: #fff; }
+    .tag-p2 { background: #1e90ff; color: #fff; }
+
+    .topic-title {
+      font-size: 13px;
+      color: #eccc68;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .question-text {
+      font-size: 17px;
+      color: #ffffff;
+      margin-bottom: 20px;
+      line-height: 1.4;
+      font-weight: 600;
+      background: rgba(0,0,0,0.3);
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .btn-option {
+      background: #4a301e;
+      border: 2px solid #70482d;
+      color: #f1f2f6;
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-option:hover {
+      background: #eccc68;
+      color: #1e120b;
+      border-color: #fff;
+      transform: translateY(-2px);
+    }
+
+    /* Game Over Modal */
+    .winner-title {
+      font-size: 28px;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+
+    .btn-restart {
+      background: linear-gradient(135deg, #2ed573, #26af5f);
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 25px;
+      cursor: pointer;
+      margin-top: 15px;
+      box-shadow: 0 4px 15px rgba(46,213,115,0.4);
+      transition: transform 0.2s;
+    }
+
+    .btn-restart:hover {
+      transform: scale(1.05);
+    }
+
+    .controls-hint {
+      margin-top: 12px;
+      color: #a4b0be;
+      font-size: 13px;
+      text-align: center;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Title Banner matching layout -->
+  <div class="main-banner">
+    <div class="banner-title">
+      🔥 FIRE & WATER: CHAOS VS DEFENDER 💧
+    </div>
+    <div class="banner-sub">
+      Player 1 (Chaos - Red): Approach blue stations to SABOTAGE [E] | Player 2 (Defender - Blue): Approach broken stations to REPAIR [SPACE]
+    </div>
+  </div>
+
+  <div class="game-wrapper">
+    <!-- Header Controls & Scores -->
+    <div class="hud-header">
+      <div class="player-badge p1-badge">
+        <span>🔴 Player 1 (WASD + [E])</span>
+        <span class="score-count">Broken: <span id="p1Score">0</span>/5</span>
+      </div>
+      <div style="font-weight: bold; color: #eccc68; font-size: 15px;">
+        ☕ CAFE QUIZ SHOWDOWN
+      </div>
+      <div class="player-badge p2-badge">
+        <span>🔵 Player 2 (Arrows + [Space])</span>
+        <span class="score-count">Fixed: <span id="p2Score">0</span>/5</span>
+      </div>
+    </div>
+
+    <!-- Main Game Canvas -->
+    <canvas id="gameCanvas" width="920" height="580"></canvas>
+
+    <!-- Quiz Modal Popup -->
+    <div id="quizModal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <span id="modalTag" class="modal-tag">Saboteur Challenge</span>
+        <div id="modalTopic" class="topic-title">Topic: Set Theory</div>
+        <div id="modalQuestion" class="question-text">Question goes here...</div>
+        <div id="modalOptions" class="options-grid"></div>
+      </div>
+    </div>
+
+    <!-- Game Over Modal Popup -->
+    <div id="endModal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div id="winnerText" class="winner-title">Player 1 Wins!</div>
+        <p id="winnerDesc" style="color: #f1f2f6; margin-bottom: 15px; font-size: 15px;"></p>
+        <button class="btn-restart" onclick="resetGame()">Play Again 🔄</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls-hint">
+    <strong>Rules:</strong> Player 1 breaks objects by answering easier Level 1 questions. Player 2 repairs broken objects by answering harder Level 2 questions.<br>
+    <strong>Victory Condition:</strong> Player 1 wins if total broken places &gt; repaired places. Player 2 wins if all broken places are repaired or on equal score.
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // UI Elements
+    const quizModal = document.getElementById('quizModal');
+    const endModal = document.getElementById('endModal');
+    const modalTag = document.getElementById('modalTag');
+    const modalTopic = document.getElementById('modalTopic');
+    const modalQuestion = document.getElementById('modalQuestion');
+    const modalOptions = document.getElementById('modalOptions');
+    const p1ScoreEl = document.getElementById('p1Score');
+    const p2ScoreEl = document.getElementById('p2Score');
+
+    // Audio Context Synthesizer
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'fire') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.exponentialRampToValueAtTime(60, now + 0.3);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'water') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.25);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'win') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.15);
+        osc.frequency.setValueAtTime(783.99, now + 0.3);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      }
+    }
+
+    // Game States
+    let p1Score = 0;
+    let p2Score = 0;
+    let activeStation = null;
+    let activePlayer = null;
+    let keys = {};
+    let particles = [];
+
+    // 5 Interactive Cafe Stations with Math Questions
+    const stations = [
+      {
+        id: 0,
+        name: "Espresso Machine",
+        icon: "☕",
+        x: 180, y: 150,
+        status: "intact", // intact, broken, fixed, failed
+        topic: "Topic 1: Set Theory & Combinatorics",
+        qP1: {
+          q: "How many ways can a barista pick 2 different coffee syrups out of 5 available options?",
+          options: ["10", "20", "5", "25"],
+          answer: 0
+        },
+        qP2: {
+          q: "In how many distinct ways can 4 different coffee mugs be arranged in a row on a shelf?",
+          options: ["12", "24", "16", "8"],
+          answer: 1
+        }
+      },
+      {
+        id: 1,
+        name: "Cash Register",
+        icon: "💻",
+        x: 460, y: 150,
+        status: "intact",
+        topic: "Topic 2: General Probability Space",
+        qP1: {
+          q: "A fair coin is flipped to decide who gets a free coffee. What is the probability of Heads?",
+          options: ["0.25", "0.50", "0.75", "1.00"],
+          answer: 1
+        },
+        qP2: {
+          q: "A fair 6-sided die is rolled. What is the probability of rolling a number strictly greater than 4?",
+          options: ["1/6", "1/3", "1/2", "2/3"],
+          answer: 1
+        }
+      },
+      {
+        id: 2,
+        name: "Pastry Display",
+        icon: "🍰",
+        x: 740, y: 150,
+        status: "intact",
+        topic: "Topic 3: Conditional & Total Probability",
+        qP1: {
+          q: "Given P(A ∩ B) = 0.20 and P(B) = 0.50, calculate the conditional probability P(A|B).",
+          options: ["0.10", "0.40", "0.70", "0.25"],
+          answer: 1
+        },
+        qP2: {
+          q: "Box 1 has 3 red & 1 blue donut. Box 2 has 1 red & 3 blue. Pick a box randomly (0.5 prob) and draw 1 donut. P(Red) = ?",
+          options: ["0.25", "0.50", "0.75", "0.40"],
+          answer: 1
+        }
+      },
+      {
+        id: 3,
+        name: "Wi-Fi Router",
+        icon: "📡",
+        x: 280, y: 440,
+        status: "intact",
+        topic: "Topic 4: Independent Events",
+        qP1: {
+          q: "Events A and B are independent. If P(A) = 0.3 and P(B) = 0.4, what is P(A ∩ B)?",
+          options: ["0.70", "0.12", "0.10", "0.50"],
+          answer: 1
+        },
+        qP2: {
+          q: "If A and B are independent with P(A) = 0.5 and P(B) = 0.6, calculate P(A ∪ B).",
+          options: ["0.80", "1.10", "0.30", "0.70"],
+          answer: 0
+        }
+      },
+      {
+        id: 4,
+        name: "POS Server Rack",
+        icon: "🗄️",
+        x: 640, y: 440,
+        status: "intact",
+        topic: "Topic 5: Frequency Distributions & Data",
+        qP1: {
+          q: "Find the mean (average) of customer tips: $2, $4, $6, $8.",
+          options: ["$4", "$5", "$6", "$20"],
+          answer: 1
+        },
+        qP2: {
+          q: "Calculate the median of daily order counts: 12, 15, 20, 25, 30, 40.",
+          options: ["20", "22.5", "25", "17.5"],
+          answer: 1
+        }
+      }
+    ];
+
+    // Player 1 (Fire Chaos) & Player 2 (Water Defender)
+    const p1 = {
+      x: 100, y: 300, radius: 22, speed: 4.5,
+      color: "#ff4757", name: "Fire Chaos",
+      type: "fire"
+    };
+
+    const p2 = {
+      x: 820, y: 300, radius: 22, speed: 4.5,
+      color: "#1e90ff", name: "Water Defender",
+      type: "water"
+    };
+
+    // Keyboard Input Listeners
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+
+      // Player 1 interact key [E]
+      if (e.code === 'KeyE' && !activePlayer) {
+        checkInteraction(p1, 1);
+      }
+      // Player 2 interact key [Space]
+      if (e.code === 'Space' && !activePlayer) {
+        checkInteraction(p2, 2);
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+    });
+
+    function checkInteraction(player, playerNum) {
+      stations.forEach(st => {
+        const dist = Math.hypot(player.x - st.x, player.y - st.y);
+        if (dist < 70) {
+          if (playerNum === 1 && st.status === 'intact') {
+            openQuiz(st, 1);
+          } else if (playerNum === 2 && st.status === 'broken') {
+            openQuiz(st, 2);
+          }
+        }
+      });
+    }
+
+    function openQuiz(station, playerNum) {
+      activeStation = station;
+      activePlayer = playerNum;
+
+      const qData = (playerNum === 1) ? station.qP1 : station.qP2;
+
+      modalTag.className = 'modal-tag ' + (playerNum === 1 ? 'tag-p1' : 'tag-p2');
+      modalTag.textContent = playerNum === 1 ? "🔥 Player 1: Attempt Sabotage" : "💧 Player 2: Attempt Repair";
+      modalTopic.textContent = station.name + " • " + station.topic;
+      modalQuestion.textContent = qData.q;
+
+      modalOptions.innerHTML = '';
+      qData.options.forEach((optText, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-option';
+        btn.textContent = optText;
+        btn.onclick = () => submitAnswer(idx, qData.answer);
+        modalOptions.appendChild(btn);
+      });
+
+      quizModal.classList.remove('hidden');
+    }
+
+    function submitAnswer(chosenIdx, correctIdx) {
+      quizModal.classList.add('hidden');
+
+      if (chosenIdx === correctIdx) {
+        if (activePlayer === 1) {
+          activeStation.status = 'broken';
+          p1Score++;
+          playSound('fire');
+          spawnBurstParticles(activeStation.x, activeStation.y, '#ff4757');
+        } else if (activePlayer === 2) {
+          activeStation.status = 'fixed';
+          p2Score++;
+          playSound('water');
+          spawnBurstParticles(activeStation.x, activeStation.y, '#1e90ff');
+        }
+      } else {
+        if (activePlayer === 1) {
+          activeStation.status = 'failed'; // P1 failed sabotage
+        }
+      }
+
+      p1ScoreEl.textContent = p1Score;
+      p2ScoreEl.textContent = p2Score;
+
+      activeStation = null;
+      activePlayer = null;
+
+      checkGameOver();
+    }
+
+    function spawnBurstParticles(x, y, color) {
+      for (let i = 0; i < 25; i++) {
+        particles.push({
+          x: x, y: y,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          radius: Math.random() * 5 + 2,
+          color: color,
+          life: 1
+        });
+      }
+    }
+
+    function checkGameOver() {
+      let remainingIntact = stations.filter(s => s.status === 'intact').length;
+      let remainingBroken = stations.filter(s => s.status === 'broken').length;
+
+      // If no intact stations remain for P1 AND no broken stations remain for P2
+      if (remainingIntact === 0 && remainingBroken === 0) {
+        setTimeout(triggerEndGame, 400);
+      }
+    }
+
+    function triggerEndGame() {
+      playSound('win');
+      endModal.classList.remove('hidden');
+      const winnerTitle = document.getElementById('winnerText');
+      const winnerDesc = document.getElementById('winnerDesc');
+
+      if (p1Score > p2Score) {
+        winnerTitle.style.color = '#ff4757';
+        winnerTitle.textContent = "🔥 Player 1 (Fire Chaos) Wins!";
+        winnerDesc.textContent = `Player 1 damaged ${p1Score} places, while Player 2 only managed to repair ${p2Score}!`;
+      } else {
+        winnerTitle.style.color = '#1e90ff';
+        winnerTitle.textContent = "💧 Player 2 (Water Defender) Wins!";
+        winnerDesc.textContent = `Player 2 successfully protected the coffee shop! Fixed: ${p2Score} / Broken: ${p1Score}.`;
+      }
+    }
+
+    function resetGame() {
+      p1Score = 0;
+      p2Score = 0;
+      p1ScoreEl.textContent = 0;
+      p2ScoreEl.textContent = 0;
+
+      stations.forEach(st => st.status = 'intact');
+      p1.x = 100; p1.y = 300;
+      p2.x = 820; p2.y = 300;
+
+      endModal.classList.add('hidden');
+      quizModal.classList.add('hidden');
+      activePlayer = null;
+      activeStation = null;
+    }
+
+    function updateMovement() {
+      if (activePlayer) return; // Freeze movement during quiz window
+
+      let p1Moved = false, p2Moved = false;
+
+      // P1 (WASD)
+      if (keys['KeyW']) { p1.y -= p1.speed; p1Moved = true; }
+      if (keys['KeyS']) { p1.y += p1.speed; p1Moved = true; }
+      if (keys['KeyA']) { p1.x -= p1.speed; p1Moved = true; }
+      if (keys['KeyD']) { p1.x += p1.speed; p1Moved = true; }
+
+      // P2 (Arrow Keys)
+      if (keys['ArrowUp']) { p2.y -= p2.speed; p2Moved = true; }
+      if (keys['ArrowDown']) { p2.y += p2.speed; p2Moved = true; }
+      if (keys['ArrowLeft']) { p2.x -= p2.speed; p2Moved = true; }
+      if (keys['ArrowRight']) { p2.x += p2.speed; p2Moved = true; }
+
+      // Spawn trail particles
+      if (p1Moved && Math.random() > 0.4) {
+        particles.push({
+          x: p1.x + (Math.random() - 0.5) * 10, y: p1.y + 10,
+          vx: (Math.random() - 0.5) * 1, vy: -Math.random() * 2,
+          radius: Math.random() * 4 + 2, color: '#ff6b81', life: 0.8
+        });
+      }
+      if (p2Moved && Math.random() > 0.4) {
+        particles.push({
+          x: p2.x + (Math.random() - 0.5) * 10, y: p2.y + 10,
+          vx: (Math.random() - 0.5) * 1, vy: Math.random() * 2,
+          radius: Math.random() * 4 + 2, color: '#70a1ff', life: 0.8
+        });
+      }
+
+      // Clamp players inside play field
+      [p1, p2].forEach(p => {
+        p.x = Math.max(50, Math.min(870, p.x));
+        p.y = Math.max(120, Math.min(540, p.y));
+      });
+    }
+
+    // --- RENDERING COFFEE SHOP INTERIOR ---
+    function drawFloor() {
+      // Warm green checkered cafe tiles matching screenshot reference
+      const tileSize = 40;
+      for (let x = 0; x < canvas.width; x += tileSize) {
+        for (let y = 80; y < canvas.height; y += tileSize) {
+          const isEven = ((x / tileSize) + (y / tileSize)) % 2 === 0;
+          ctx.fillStyle = isEven ? '#3e6346' : '#33533a';
+          ctx.fillRect(x, y, tileSize, tileSize);
+
+          // Tile borders
+          ctx.strokeStyle = 'rgba(0,0,0,0.08)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x, y, tileSize, tileSize);
+        }
+      }
+    }
+
+    function drawCafeEnvironment() {
+      // Top Mahogany Wood Bar Counter
+      ctx.fillStyle = '#5c3821';
+      ctx.fillRect(0, 80, 920, 110);
+
+      // Counter Top Gloss Highlights
+      ctx.fillStyle = '#835232';
+      ctx.fillRect(0, 182, 920, 8);
+
+      // Chalkboard Menu on back wall
+      ctx.fillStyle = '#1c2826';
+      ctx.fillRect(320, 10, 280, 60);
+      ctx.strokeStyle = '#835232';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(320, 10, 280, 60);
+
+      ctx.fillStyle = '#f1f2f6';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText("☕ COFFEE & PASTRY MENU 🥐", 460, 28);
+      ctx.font = '10px sans-serif';
+      ctx.fillStyle = '#eccc68';
+      ctx.fillText("Espresso $3.00 | Latte $4.50 | Croissant $3.50", 460, 48);
+
+      // Cozy Warm Lights overhead
+      [150, 460, 770].forEach(lx => {
+        const grad = ctx.createRadialGradient(lx, 0, 10, lx, 0, 140);
+        grad.addColorStop(0, 'rgba(255, 234, 167, 0.25)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(lx, 0, 140, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Round Wooden Tables & Chairs
+      drawTable(140, 320);
+      drawTable(460, 320);
+      drawTable(780, 320);
+
+      // Potted Monstera Plants in corners
+      drawPlant(40, 110);
+      drawPlant(880, 110);
+    }
+
+    function drawTable(x, y) {
+      // Chairs
+      ctx.fillStyle = '#3a2315';
+      ctx.beginPath(); ctx.arc(x - 28, y, 11, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + 28, y, 11, 0, Math.PI * 2); ctx.fill();
+
+      // Wooden Tabletop
+      ctx.fillStyle = '#966843';
+      ctx.beginPath(); ctx.arc(x, y, 24, 0, Math.PI * 2); ctx.fill();
+      ctx.lineWidth = 3; ctx.strokeStyle = '#5c3821'; ctx.stroke();
+
+      // Coffee cups on table
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(x - 5, y - 4, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6f4e37';
+      ctx.beginPath(); ctx.arc(x - 5, y - 4, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function drawPlant(x, y) {
+      // Pot
+      ctx.fillStyle = '#d35400';
+      ctx.fillRect(x - 12, y - 10, 24, 20);
+
+      // Green Leaves
+      ctx.fillStyle = '#2ed573';
+      ctx.beginPath(); ctx.arc(x - 8, y - 16, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + 8, y - 16, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y - 24, 12, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function drawStations() {
+      stations.forEach(st => {
+        // Station Base Platform
+        ctx.fillStyle = '#2b1a10';
+        ctx.beginPath();
+        ctx.arc(st.x, st.y, 36, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Animated Ring Pulsing Status Color
+        ctx.lineWidth = 4;
+        if (st.status === 'intact') {
+          ctx.strokeStyle = '#3498db'; // Ready for Player 1
+        } else if (st.status === 'broken') {
+          ctx.strokeStyle = '#ff4757'; // Ready for Player 2
+        } else if (st.status === 'fixed') {
+          ctx.strokeStyle = '#2ed573'; // Fully Repaired
+        } else {
+          ctx.strokeStyle = '#747d8c'; // Failed P1 attempt
+        }
+        ctx.stroke();
+
+        // Render Fire effect if Broken
+        if (st.status === 'broken') {
+          ctx.fillStyle = 'rgba(255, 71, 87, 0.2)';
+          ctx.beginPath(); ctx.arc(st.x, st.y, 44, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // Icon
+        ctx.font = '26px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(st.icon, st.x, st.y - 2);
+
+        // Status Label Box
+        let statusText = "[P1 DESTROY]";
+        let badgeBg = "#3498db";
+
+        if (st.status === 'broken') {
+          statusText = "[P2 REPAIR!]";
+          badgeBg = "#ff4757";
+        } else if (st.status === 'fixed') {
+          statusText = "✓ FIXED";
+          badgeBg = "#2ed573";
+        } else if (st.status === 'failed') {
+          statusText = "INTACT";
+          badgeBg = "#747d8c";
+        }
+
+        ctx.fillStyle = badgeBg;
+        ctx.fillRect(st.x - 44, st.y + 22, 88, 16);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText(statusText, st.x, st.y + 30);
+
+        // Name Tag above
+        ctx.fillStyle = '#f1f2f6';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText(st.name, st.x, st.y - 44);
+      });
+    }
+
+    function drawPlayerCharacter(p, isP1) {
+      // Glow under feet
+      ctx.fillStyle = isP1 ? 'rgba(255, 71, 87, 0.35)' : 'rgba(30, 144, 255, 0.35)';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y + 10, 18, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Body / Hoodie
+      ctx.fillStyle = isP1 ? '#ff4757' : '#1e90ff';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y + 2, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Head
+      ctx.fillStyle = '#ffeaa7';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y - 10, 11, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Eyes
+      ctx.fillStyle = '#2f3542';
+      ctx.beginPath();
+      ctx.arc(p.x - 4, p.y - 12, 2, 0, Math.PI * 2);
+      ctx.arc(p.x + 4, p.y - 12, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (isP1) {
+        // Red Saboteur Cap + Flame Motif
+        ctx.fillStyle = '#d63031';
+        ctx.fillRect(p.x - 12, p.y - 20, 24, 6);
+        ctx.fillStyle = '#ffa502';
+        ctx.fillText("🔥", p.x, p.y - 22);
+      } else {
+        // Barista Chef Hat + Water Drop
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(p.x - 10, p.y - 22, 20, 8);
+        ctx.fillStyle = '#70a1ff';
+        ctx.fillText("💧", p.x, p.y - 22);
+      }
+
+      // Player Name Label
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(isP1 ? "P1 (Chaos)" : "P2 (Defender)", p.x, p.y - 30);
+    }
+
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let pt = particles[i];
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.life -= 0.03;
+
+        if (pt.life <= 0) {
+          particles.splice(i, 1);
+        } else {
+          ctx.fillStyle = pt.color;
+          ctx.globalAlpha = pt.life;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1.0;
+        }
+      }
+    }
+
+    function gameLoop() {
+      updateMovement();
+
+      // Clear Canvas & Draw Frame
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawFloor();
+      drawCafeEnvironment();
+      drawStations();
+
+      // Particles & Players
+      updateParticles();
+      drawPlayerCharacter(p1, true);
+      drawPlayerCharacter(p2, false);
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Start Game Render Loop
+    gameLoop();
+  </script>
+</body>
+</html>
